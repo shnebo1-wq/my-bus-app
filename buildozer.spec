@@ -17,13 +17,13 @@ source.include_exts = py,png,jpg,kv,atlas,ttf
 # (str) ვერსია
 version = 1.0.0
 
-# (list) აუცილებელი ბიბლიოთეკები
-requirements = python3,kivy==2.3.0,kivymd,pillow
+# (list) აუცილებელი ბიბლიოთეკები (დამატებულია openssl, requests და sh სტაბილურობისთვის)
+requirements = python3,kivy==2.3.0,kivymd,pillow,openssl,requests,sh
 
-# (list) ნებართვები
-android.permissions = INTERNET, SEND_SMS, READ_PHONE_STATE, RECEIVE_SMS
+# (list) ნებართვები (დამატებულია SMS-ის სრული მხარდაჭერა)
+android.permissions = INTERNET, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, READ_SMS, WAKE_LOCK
 
-# (int) Android API-ს პარამეტრები
+# (int) Android API-ს პარამეტრები (API 33 არის სტანდარტი)
 android.api = 33
 android.minapi = 21
 android.ndk = 25b
@@ -45,7 +45,7 @@ android.apptheme = "@android:style/Theme.NoTitleBar"
 # (bool) AndroidX მხარდაჭერა (KivyMD-სთვის აუცილებელია)
 android.enable_androidx = True
 
-# (str) P4A ბრენჩი (სტაბილურობისთვის)
+# (str) P4A ბრენჩი
 p4a.branch = master
 
 [buildozer]
