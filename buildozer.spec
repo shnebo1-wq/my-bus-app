@@ -1,67 +1,40 @@
-[app]
+name: Build Android APK
+on: [push, pull_request]
 
-# (str) Title of your application
-title = RSS Control Center Pro
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-# (str) Package name
-package.name = rss_commander
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-# (str) Package domain
-package.domain = org.rss.bus
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev \
+          libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev \
+          python3-dev libgles2-mesa-dev libsdl2-dev libsdl2-image-dev \
+          libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev \
+          libavformat-dev libavcodec-dev libsqlite3-dev
+          
+          # აქ ვასწორებთ კრიტიკულ ვერსიებს
+          pip install --upgrade pip
+          pip install Cython==0.29.33
+          pip install buildozer
 
-# (str) Source code where the main.py live
-source.dir = .
+      - name: Build with Buildozer
+        run: |
+          # ეს ბრძანება ავტომატურად ადასტურებს SDK-ს ლიცენზიებს
+          yes | buildozer -v android debug
+        env:
+          BUILDOZER_WARN_ON_ROOT: 1
 
-# (list) Source files to include (py, kv, png, ttf etc.)
-source.include_exts = py,png,jpg,kv,atlas,ttf,json,dat
-
-# (str) Application versioning
-version = 1.0.0
-
-# (list) Application requirements
-# მნიშვნელოვანი: kivymd==1.2.0 და სხვა დამოკიდებულებები
-requirements = python3,hostpython3,kivy==2.3.0,kivymd==1.2.0,pillow,requests,urllib3,chardet,idna,certifi,openssl
-
-# (str) Custom source folders for requirements (if any)
-# source.include_patterns = assets/*,images/*.png
-
-# (str) Application icon and presplash
-icon.filename = %(source.dir)s/logo.png
-presplash.filename = %(source.dir)s/logo.png
-
-# (list) Permissions
-# დამატებულია POST_NOTIFICATIONS Android 13-სთვის
-android.permissions = INTERNET, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, READ_SMS, WAKE_LOCK, POST_NOTIFICATIONS
-
-# (int) Target Android API (33 is good for Play Store)
-android.api = 33
-android.minapi = 21
-android.ndk = 25b
-android.ndk_api = 21
-
-# (bool) Use --private data storage
-android.private_storage = True
-
-# (list) Android architectures
-# დავამატე armeabi-v7a სტაბილურობისთვის
-android.archs = arm64-v8a, armeabi-v7a
-
-# (bool) Full screen application
-fullscreen = 1
-
-# (str) Supported orientation
-orientation = portrait
-
-# (bool) enable AndroidX support. Required for KivyMD.
-android.enable_androidx = True
-
-# (bool) Accept SDK license
-android.accept_sdk_license = True
-
-# (str) python-for-android branch
-p4a.branch = master
-
-[buildozer]
-# Log level 2 იძლევა დეტალურ ინფორმაციას შეცდომებზე
-log_level = 2
-warn_on_root = 1
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: my-bus-app-apk
+          path: bin/*.apk
