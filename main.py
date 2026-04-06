@@ -1,4 +1,4 @@
-import json, os, base64, threading, time, requests, urllib3
+import json, os, base64, threading, time, requests, urllib3, certifi
 from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.core.text import LabelBase
@@ -14,7 +14,10 @@ from kivy.properties import StringProperty, ColorProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.clock import Clock
 from kivy.app import App
+from kivy.utils import platform
 
+# SSL სერტიფიკატების ფიქსი ანდროიდისთვის
+os.environ['SSL_CERT_FILE'] = certifi.where()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- შრიფტის ფიქსი ---
@@ -28,10 +31,17 @@ else:
 
 def get_path(filename):
     try:
-        base_path = App.get_running_app().user_data_dir
+        # ანდროიდზე ვიყენებთ აპლიკაციის პრივატულ ფოლდერს
+        if platform == 'android':
+            from android.storage import app_storage_path
+            base_path = app_storage_path()
+        else:
+            base_path = "."
+            
         if not os.path.exists(base_path): os.makedirs(base_path)
         return os.path.join(base_path, filename)
-    except: return filename
+    except: 
+        return filename
 
 API_DATA = {"u": "RSS", "p": "zLdNY8JkBi", "c": "1160", "s": "3167", "h": "FZf3eNx@ZJE", "sd": "RSS-BUS"}
 API_BASE_URL = "https://bi.msg.ge/sendsms.php"
@@ -94,7 +104,6 @@ ScreenManager:
             pos: self.pos
             radius: [20,]
     
-    # სტატუსის ინდიკატორი (წერტილი)
     MDIcon:
         icon: "circle"
         theme_text_color: "Custom"
@@ -126,7 +135,7 @@ ScreenManager:
     MDIconButton:
         icon: "stop-circle"
         theme_text_color: "Custom"
-        text_color: 1, 0.3, 0.3, 1
+        text_color: [1, 0.3, 0.3, 1]
         on_release: app.fire_single(root.phone, root.name, "OFF")
     MDIconButton:
         icon: "trash-can-outline"
@@ -183,7 +192,7 @@ ScreenManager:
                     icon: "power-off"
                     size_hint: (1, None)
                     height: "60dp"
-                    md_bg_color: 0.8, 0.2, 0.2, 1
+                    md_bg_color: [0.8, 0.2, 0.2, 1]
                     on_release: app.confirm_action("OFF")
             Widget:
 
@@ -215,7 +224,6 @@ ScreenManager:
                 padding: "15dp"
                 spacing: "12dp"
 
-# ... (History და Settings სქრინები იგივე რჩება)
 <HistoryScreen>:
     name: "history"
     MDBoxLayout:
@@ -292,7 +300,7 @@ ScreenManager:
 class StopRow(BoxLayout):
     name = StringProperty()
     phone = StringProperty()
-    status_color = ColorProperty([0.5, 0.5, 0.5, 1]) # ნაცრისფერი (უცნობია)
+    status_color = ColorProperty([0.5, 0.5, 0.5, 1])
 
 class LoginScreen(Screen): pass
 class MainScreen(Screen): pass
@@ -304,7 +312,6 @@ class RSSMobileApp(MDApp):
     def build(self):
         self.db = self.load_db()
         self.history = self.load_history()
-        # ინდიკატორებისთვის:
         self.unit_status = self.db.get("states", {}) 
         
         self.theme_cls.theme_style = self.db.get("theme_style", "Dark")
@@ -337,12 +344,11 @@ class RSSMobileApp(MDApp):
     def save_db(self, *args):
         try:
             path = get_path("system_config.dat")
-            self.db["states"] = self.unit_status # ინდიკატორების შენახვა
+            self.db["states"] = self.unit_status
             with open(path, "wb") as f:
                 f.write(base64.b64encode(json.dumps(self.db).encode()))
         except: pass
 
-    # --- EDIT & ADD დიალოგები ---
     def show_add_dialog(self):
         self.show_unit_dialog("დამატება", "", "")
 
@@ -375,17 +381,18 @@ class RSSMobileApp(MDApp):
         self.close_dia()
 
     def refresh_ui(self, search_query=""):
-        container = self.root.get_screen("database").ids.unit_list
-        container.clear_widgets()
-        nums = self.db.get("nums", {})
-        q = search_query.lower()
-        
-        for p, n in nums.items():
-            if q in n.lower() or q in p:
-                # ინდიკატორის ფერის დადგენა
-                state = self.unit_status.get(p, "OFF")
-                color = [0, 1, 0, 1] if state == "ON" else [1, 0, 0, 1]
-                container.add_widget(StopRow(name=n, phone=p, status_color=color))
+        try:
+            container = self.root.get_screen("database").ids.unit_list
+            container.clear_widgets()
+            nums = self.db.get("nums", {})
+            q = search_query.lower()
+            
+            for p, n in nums.items():
+                if q in n.lower() or q in p:
+                    state = self.unit_status.get(p, "OFF")
+                    color = [0, 1, 0, 1] if state == "ON" else [1, 0, 0, 1]
+                    container.add_widget(StopRow(name=n, phone=p, status_color=color))
+        except: pass
 
     def _send_logic(self, phone, name, cmd_type, is_batch=False):
         if not is_batch:
@@ -402,18 +409,17 @@ class RSSMobileApp(MDApp):
         except: pass
         
         if success:
-            self.unit_status[phone] = cmd_type # ვიმახსოვრებთ მდგომარეობას
+            self.unit_status[phone] = cmd_type
             self.save_db()
 
-        # ისტორიაში ჩაწერა
         icon = "check-circle" if success else "alert-circle"
         entry = {"time": time.strftime("%H:%M:%S"), "name": name, "cmd": cmd_type, "icon": icon}
         self.history.insert(0, entry); self.history = self.history[:30]
         try:
-            with open(get_path("activity_log.json"), "w", encoding='utf-8') as f: json.dump(self.history, f, ensure_ascii=False)
+            with open(get_path("activity_log.json"), "w", encoding='utf-8') as f: 
+                json.dump(self.history, f, ensure_ascii=False)
         except: pass
 
-    # ... (დანარჩენი დამხმარე ფუნქციები: change_screen, remove_unit, etc. იგივე რჩება)
     def change_screen(self, name):
         self.root.current = name
         if name == "database": self.refresh_ui()
@@ -434,11 +440,13 @@ class RSSMobileApp(MDApp):
         if self.dia: self.dia.dismiss(); self.dia = None
 
     def update_status_ui(self, name, text, color, icon):
-        ui = self.root.get_screen("main").ids
-        ui.live_node_name.text = name
-        ui.live_status_text.text = text
-        ui.status_card.md_bg_color = color
-        ui.status_icon.icon = icon
+        try:
+            ui = self.root.get_screen("main").ids
+            ui.live_node_name.text = name
+            ui.live_status_text.text = text
+            ui.status_card.md_bg_color = color
+            ui.status_icon.icon = icon
+        except: pass
 
     def fire_single(self, phone, name, cmd_type):
         self.change_screen("main")
@@ -466,23 +474,33 @@ class RSSMobileApp(MDApp):
     def _broadcast_logic(self, cmd_type):
         units = list(self.db["nums"].items())
         total = len(units)
+        if total == 0:
+            Clock.schedule_once(lambda dt: self.close_dia())
+            return
+            
         for index, (p, n) in enumerate(units):
             self._send_logic(p, n, cmd_type, is_batch=True)
-            Clock.schedule_once(lambda dt, v=((index+1)/total)*100, m=f"გაგზავნა: {index+1}/{total}": self._update_prog_bar(v,m))
-            time.sleep(0.4)
+            val = ((index+1)/total)*100
+            msg = f"გაგზავნა: {index+1}/{total}"
+            Clock.schedule_once(lambda dt, v=val, m=msg: self._update_prog_bar(v, m))
+            time.sleep(0.5)
         Clock.schedule_once(lambda dt: self.close_dia())
 
     def _update_prog_bar(self, val, msg):
-        self.prog_bar.value = val
-        self.prog_label.text = msg
+        try:
+            self.prog_bar.value = val
+            self.prog_label.text = msg
+        except: pass
 
     def refresh_history_ui(self):
-        container = self.root.get_screen("history").ids.history_list
-        container.clear_widgets()
-        for item in self.history:
-            li = OneLineIconListItem(text=f"[{item['time']}] {item['name']} -> {item['cmd']}")
-            li.add_widget(IconLeftWidget(icon=item['icon']))
-            container.add_widget(li)
+        try:
+            container = self.root.get_screen("history").ids.history_list
+            container.clear_widgets()
+            for item in self.history:
+                li = OneLineIconListItem(text=f"[{item['time']}] {item['name']} -> {item['cmd']}")
+                li.add_widget(IconLeftWidget(icon=item['icon']))
+                container.add_widget(li)
+        except: pass
 
     def load_history(self):
         path = get_path("activity_log.json")
@@ -494,7 +512,9 @@ class RSSMobileApp(MDApp):
 
     def clear_history(self):
         self.history = []; self.refresh_history_ui()
-        try: os.remove(get_path("activity_log.json"))
+        try: 
+            path = get_path("activity_log.json")
+            if os.path.exists(path): os.remove(path)
         except: pass
 
     def show_color_picker(self):
