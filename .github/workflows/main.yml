@@ -7,11 +7,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get Date
-        id: get-date
-        run: |
-          echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
-
       - name: Install Dependencies
         run: |
           sudo apt update
@@ -20,9 +15,5 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          # წინა ბილდის ნარჩენების წაშლა შეცდომის თავიდან ასაცილებლად
           rm -rf .buildozer
-          # ბილდის გაშვება
           yes | buildozer -v android debug
-        env:
-          PYTHONPATH: .
