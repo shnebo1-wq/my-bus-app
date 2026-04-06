@@ -6,47 +6,38 @@ title = RSS Control Center Pro
 # (str) Package name
 package.name = rss_commander
 
-# (str) Package domain (needed for android packaging)
+# (str) Package domain
 package.domain = org.rss.bus
 
 # (str) Source code where the main.py live
 source.dir = .
 
-# (list) Source files to include ( py, kv, ttf - აუცილებელია ფონტისთვის)
+# (list) ჩამონათვალში დავამატე json და dat ფაილები
 source.include_exts = py,png,jpg,kv,atlas,ttf,json,dat
 
 # (str) Application versioning
 version = 1.0.0
 
-# (list) Application requirements
-# აქ დამატებულია openssl და requests-ის დამხმარე ბიბლიოთეკები
+# (list) დამატებულია requests-ის ყველა საჭირო დამოკიდებულება
 requirements = python3, kivy==2.3.0, kivymd, pillow, openssl, requests, urllib3, chardet, idna, certifi, sh
 
-# (str) Custom icon (შეცვალეთ თქვენი ფაილის სახელით)
+# (str) დარწმუნდით რომ ფაილს ზუსტად logo.png ჰქვია
 icon.filename = %(source.dir)s/logo.png
-
-# (str) Presplash (ჩატვირთვის ეკრანი)
 presplash.filename = %(source.dir)s/logo.png
 
-# (list) Permissions - ინტერნეტი და SMS
+# (list) Permissions
 android.permissions = INTERNET, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, READ_SMS, WAKE_LOCK
 
 # (int) Target Android API
 android.api = 33
-
-# (int) Minimum API
 android.minapi = 21
-
-# (str) Android NDK version
 android.ndk = 25b
-
-# (int) Android NDK API
 android.ndk_api = 21
 
 # (bool) Use --private data storage
 android.private_storage = True
 
-# (list) Android architectures (arm64-v8a ყველაზე სტანდარტულია დღეს)
+# (list) Android architectures
 android.archs = arm64-v8a
 
 # (bool) Full screen application
@@ -65,9 +56,5 @@ android.accept_sdk_license = True
 p4a.branch = master
 
 [buildozer]
-
-# (int) Log level (2 ნიშნავს სრულ დეტალებს ერორების საპოვნელად)
 log_level = 2
-
-# (int) Display warning if buildozer is run as root
 warn_on_root = 1
