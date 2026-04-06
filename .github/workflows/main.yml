@@ -7,8 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04 # ვიყენებთ სტაბილურ ვერსიას
-
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,18 +23,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
+        shell: bash
         run: |
-          sudo apt update
-          sudo apt install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-text-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev libssl-dev libncurses5-dev libncursesw5-dev libreadline-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev tk-dev libffi-dev liblzma-dev libtool automake autoconf pkg-config unzip
-          pip install --user --upgrade buildozer Cython virtualenv
+          # ხელახალი მცდელობა თუ apt ჩაიშალა (აგვარებს 100-ე ერორს)
+          sudo apt-get update || sudo apt-get update
+          sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev libssl-dev libffi-dev libtool automake autoconf pkg-config unzip
+          
+          # ბიბლიოთეკების ინსტალაცია
+          pip install --user --upgrade buildozer Cython==0.29.33 virtualenv
 
       - name: Build with Buildozer
+        shell: bash
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # ვშლით ძველ ქეშს სუფთა ბილდისთვის
+          # ვასუფთავებთ გარემოს
           buildozer android clean
-          # ვიყენებთ 'yes'-ს ლიცენზიებისთვის და ვუშვებთ ბილდს
+          # ვიყენებთ --requirements-ს რომ ფორსირებულად დააყენოს
           yes | buildozer -v android debug
         
       - name: Upload APK
