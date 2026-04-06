@@ -1,34 +1,46 @@
 name: Build Android APK
 on:
   push:
-    branches: [ "main", "master" ] # გაეშვება როცა კოდს ატვირთავთ main ან master ბრენჩზე
+    branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # ვიყენებთ სტაბილურ ვერსიას
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get Date
-        id: get-date
-        run: |
-          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-
-      # ეს არის სპეციალური ექშენი, რომელიც ყველაზე სტაბილურად აშენებს Kivy/KivyMD აპლიკაციებს
-      - name: Build with Buildozer
-        uses: ArtemSashko/buildozer-action@v1
-        id: buildozer
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          buildozer_version: master
-          command: buildozer android debug
-          repository_read_token: ${{ secrets.GITHUB_TOKEN }}
+          python-version: '3.11'
 
-      - name: Upload APK Artifact
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-text-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev libssl-dev libncurses5-dev libncursesw5-dev libreadline-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev tk-dev libffi-dev liblzma-dev libtool automake autoconf pkg-config unzip
+          pip install --user --upgrade buildozer Cython virtualenv
+
+      - name: Build with Buildozer
+        run: |
+          export PATH=$PATH:$HOME/.local/bin
+          # ვშლით ძველ ქეშს სუფთა ბილდისთვის
+          buildozer android clean
+          # ვიყენებთ 'yes'-ს ლიცენზიებისთვის და ვუშვებთ ბილდს
+          yes | buildozer -v android debug
+        
+      - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: RSS-Control-Center-${{ steps.get-date.outputs.date }}
+          name: RSS-Control-Center-Pro
           path: bin/*.apk
