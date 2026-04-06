@@ -1,53 +1,94 @@
 [app]
-# (str) აპლიკაციის სახელი
+
+# (str) Title of your application
 title = RSS Control Center Pro
 
-# (str) პაკეტის სახელი (უნდა იყოს პატარა ასოებით და ქვედა ტირეებით)
+# (str) Package name
 package.name = rss_commander
 
-# (str) პაკეტის დომენი
+# (str) Package domain (needed for android packaging)
 package.domain = org.rss.bus
 
-# (str) წყაროს საქაღალდე
+# (str) Source code where the main.py live
 source.dir = .
 
-# (list) ფაილის გაფართოებები, რომლებიც უნდა შევიდეს APK-ში
-source.include_exts = py,png,jpg,kv,atlas,ttf
+# (list) Source files to include (let's empty to include all the files)
+source.include_exts = py,png,jpg,kv,atlas,ttf,json,dat
 
-# (str) ვერსია
+# (list) List of inclusions using pattern matching
+# source.include_patterns = assets/*,images/*.png
+
+# (list) Source files to exclude (let's empty to exclude nothing)
+# source.exclude_exts = spec
+
+# (str) Application versioning (method 1)
 version = 1.0.0
 
-# (list) აუცილებელი ბიბლიოთეკები (აქ დავამატე openssl და sh, რაც SMS-ისთვის გჭირდება)
-requirements = python3,kivy==2.3.0,kivymd,pillow,openssl,requests,sh
+# (list) Application requirements
+# დამატებულია: openssl (HTTPS-ისთვის), certifi/idna/urllib3 (requests-ისთვის)
+requirements = python3, kivy==2.3.0, kivymd, pillow, openssl, requests, urllib3, chardet, idna, certifi, sh
 
-# (list) ნებართვები (აქ არის ყველა საჭირო SMS და ინტერნეტ უფლება)
+# (str) Custom source folders for requirements
+# packagelist.vendor = 
+
+# (list) Permissions
 android.permissions = INTERNET, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, READ_SMS, WAKE_LOCK
 
-# (int) Android API პარამეტრები (API 33 აუცილებელია თანამედროვე ტელეფონებისთვის)
+# (list) features required by the app
+# android.features = android.hardware.telephony
+
+# (int) Target Android API, should be as high as possible.
 android.api = 33
+
+# (int) Minimum API your APK will support.
 android.minapi = 21
+
+# (int) Android SDK version to use
+# android.sdk = 33
+
+# (str) Android NDK version to use
 android.ndk = 25b
+
+# (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
 android.ndk_api = 21
 
-# (list) არქიტექტურა (პირველ ბილდზე მხოლოდ ერთი დავტოვოთ სტაბილურობისთვის)
+# (bool) Use --private data storage (True) or --dir public storage (False)
+android.private_storage = True
+
+# (list) Android architectures to build for
 android.archs = arm64-v8a
 
-# (bool) ეკრანის პარამეტრები
+# (bool) Full screen application
 fullscreen = 1
+
+# (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
 
-# (bool) ლიცენზიის ავტომატური დადასტურება
-android.accept_sdk_license = True
+# (bool) Indicate if the application should be allowed to exit when pressing the back button.
+# android.allow_backup = True
 
-# (bool) AndroidX მხარდაჭერა (KivyMD-სთვის აუცილებელია)
+# (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
+# android.arch = arm64-v8a
+
+# (bool) enable AndroidX support. Required for KivyMD.
 android.enable_androidx = True
 
-# (str) P4A ბრენჩი
+# (bool) Accept SDK license
+android.accept_sdk_license = True
+
+# (str) python-for-android branch to use
 p4a.branch = master
 
 [buildozer]
-# (int) ლოგის დონე (2 ნიშნავს, რომ ყველა დეტალს დაგვიწერს)
+
+# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
 log_level = 2
 
-# (int) გაფრთხილება root-ზე
+# (int) Display warning if buildozer is run as root (0 = NO, 1 = YES)
 warn_on_root = 1
+
+# (str) Path to build artifact storage, default is to use binaries/ within the project
+# build_dir = ./.buildozer
+
+# (str) Path to build output (i.e. .apk, .aab location)
+# bin_dir = ./bin
