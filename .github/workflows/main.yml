@@ -21,16 +21,22 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
-          pip install --user buildozer Cython==0.29.33
+          sudo apt install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev libssl-dev libncurses5-dev libncursesw5-dev libreadline-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev tk-dev libffi-dev liblzma-dev
+          pip install --user --upgrade buildozer Cython virtualenv
 
       - name: Build with Buildozer
         run: |
-          # პირდაპირ გავუშვათ ყოველგვარი ზედმეტი ბრძანების გარეშე
+          # დავამატოთ buildozer-ის გზა PATH-ში
+          export PATH=$PATH:$HOME/.local/bin
+          
+          # მივიღოთ SDK ლიცენზიები ავტომატურად
+          yes | buildozer android clean
+          
+          # ბილდის გაშვება
           buildozer -v android debug
         
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: my-bus-app
+          name: RSS-Control-Center-APK
           path: bin/*.apk
