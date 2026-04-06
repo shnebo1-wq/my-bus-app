@@ -15,35 +15,31 @@ source.dir = .
 # (list) აუცილებლად შეიყვანეთ ყველა საჭირო გაფართოება
 source.include_exts = py,png,jpg,kv,atlas,ttf,json,dat
 
-# (list) List of inclusions using pattern matching
-# source.include_patterns = assets/*,images/*.png
-
 # (str) Application versioning
 version = 1.0.0
 
-# (list) კრიტიკული ხაზი: ბიბლიოთეკების სწორი ვერსიები
-requirements = python3,hostpython3,kivy==2.3.0,kivymd==1.2.0,pillow,requests,urllib3,chardet,idna,certifi,openssl
+# --- ჩასწორებული REQUIREMENTS ---
+# ამოღებულია hostpython3 (Actions-ს თავისი აქვს) და დამატებულია certifi
+requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,requests,urllib3,certifi
 
-# (str) Custom source folders for requirements
-# requirements.source.kivymd = ../kivymd
-
-# (str) Presplash and Icon (დარწმუნდით რომ ფაილები დევს GitHub-ზე)
+# (str) Presplash and Icon
 icon.filename = %(source.dir)s/logo.png
 presplash.filename = %(source.dir)s/logo.png
 
-# (list) Permissions (საჭიროა SMS-ისთვის და ინტერნეტისთვის)
+# (list) Permissions
 android.permissions = INTERNET, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, READ_SMS, WAKE_LOCK, POST_NOTIFICATIONS
 
-# (int) Target Android API (33 არის ოპტიმალური დღეს)
+# --- API და NDK ფიქსი ---
 android.api = 33
 android.minapi = 21
+# NDK 25b კარგია, მაგრამ GitHub-ზე 23b ხშირად უფრო სტაბილურია
 android.ndk = 25b
 android.ndk_api = 21
 
 # (bool) Use --private data storage
 android.private_storage = True
 
-# (list) Android architectures (ორივე საჭიროა სხვადასხვა ტელეფონისთვის)
+# (list) Android architectures
 android.archs = arm64-v8a, armeabi-v7a
 
 # (bool) Full screen application
@@ -62,12 +58,5 @@ android.accept_sdk_license = True
 p4a.branch = master
 
 [buildozer]
-# დეტალური ლოგები შეცდომების საპოვნელად
 log_level = 2
 warn_on_root = 1
-
-# (str) Path to build artifacts
-# build_dir = ./.buildozer
-
-# (str) Path to bin directory
-# bin_dir = ./bin
