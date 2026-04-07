@@ -1,33 +1,23 @@
-name: Build APK
-on: [push, pull_request]
+[app]
+title = RSS Control Pro
+package.name = rss_commander
+package.domain = org.rss.bus
+source.dir = .
+source.include_exts = py,png,jpg,kv,ttf,json,dat
+version = 1.0.0
 
-jobs:
-  build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
+requirements = python3,kivy,kivymd,requests,urllib3,certifi
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+android.permissions = INTERNET, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, WAKE_LOCK, READ_SMS
+android.api = 33
+android.minapi = 21
+android.ndk = 25b
+android.jdk = 17
+android.private_storage = True
+android.enable_androidx = True
+android.accept_sdk_license = True
+android.archs = arm64-v8a
 
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev python3-dev
-          pip3 install --user --upgrade Cython==0.29.33 virtualenv buildozer
-          # PATH-ის დამატება რომ სისტემამ buildozer დაინახოს
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Build with Buildozer
-        run: |
-          # 'yes' აუცილებელია ლიცენზიებზე დასათანხმებლად
-          yes | buildozer -v android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: package
-          path: bin/*.apk
+[buildozer]
+log_level = 2
+warn_on_root = 1
