@@ -25,5 +25,5 @@ jobs:
       - name: Build with Buildozer
         run: |
           rm -rf .buildozer
-          # ვიყენებთ buildozer-ს 'yes' ბრძანების გარეშე, რომ თავიდან ავიცილოთ Broken Pipe
+          # ვიყენებთ buildozer-ს 'yes' ბრძანების გარეშე
           buildozer -v android debug
