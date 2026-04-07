@@ -19,12 +19,11 @@ source.include_exts = py,png,jpg,kv,ttf,json,dat
 version = 1.0.0
 
 # (list) Application requirements
-# დამატებულია Kivy და KivyMD ვერსიების გარეშე სტაბილურობისთვის
 requirements = python3,kivy,kivymd,requests,urllib3,certifi
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
-# ჩართულია 'sensor' ავტო-როტაციისთვის
-orientation = sensor
+# 'all' ნიშნავს სრულ ავტო-როტაციას ყველა მხარეს
+orientation = all
 
 # (list) Permissions
 android.permissions = INTERNET, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, WAKE_LOCK, READ_SMS
@@ -41,14 +40,25 @@ android.ndk = 25b
 # (bool) Use --private data storage (True) or --dir public storage (False)
 android.private_storage = True
 
-# (str) Android NDK directory (if empty, it will be automatically downloaded)
+# (bool) OK for Android SDK license
 android.accept_sdk_license = True
 
-# (str) The Android arch to build for. 
-# GitHub Actions-ისთვის მხოლოდ ერთი (arm64-v8a) ყველაზე სწრაფია
+# (str) The Android arch to build for.
 android.archs = arm64-v8a
 
 # (bool) enables Androidx explicitely.
 android.enable_androidx = True
 
-# (str
+# --- ოპტიმიზაცია GitHub-ისთვის ---
+android.no_byte_compile_python_optimization = 1
+
+[buildozer]
+
+# (int) Log level (0 = error only, 1 = info, 2 = debug)
+log_level = 2
+
+# (int) Display warning if buildozer is run as root
+warn_on_root = 1
+
+# (str) Path to build artifacts
+bin_dir = ./bin
