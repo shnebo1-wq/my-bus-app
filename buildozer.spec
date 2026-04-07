@@ -6,16 +6,16 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,ttf,json,dat
 version = 1.0.0
 
-# მინიმალისტური requirements
+# მინიმალისტური requirements (Pillow-ს გარეშე)
 requirements = python3,kivy==2.3.0,kivymd==1.2.0,requests,urllib3,certifi
 
 android.permissions = INTERNET, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, WAKE_LOCK, READ_SMS
 
 # --- კრიტიკული ოპტიმიზაცია ---
-# ვთიშავთ ზედმეტ კომპილაციას დროსა და რესურსის დასაზოგად
+# ვთიშავთ ზედმეტ კომპილაციას რესურსის დასაზოგად
 android.no_byte_compile_python_optimization = 1
 
-# ვტოვებთ მხოლოდ 1 არქიტექტურას - ეს აუცილებელია GitHub-ზე ბილდის დასასრულებლად
+# ვტოვებთ მხოლოდ 1 არქიტექტურას - აუცილებელია GitHub-ზე ბილდისთვის
 android.archs = arm64-v8a
 
 android.api = 33
