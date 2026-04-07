@@ -7,6 +7,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ვასუფთავებთ ადგილს დისკზე
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+
       - name: Install Dependencies
         run: |
           sudo apt update
@@ -16,4 +23,5 @@ jobs:
       - name: Build with Buildozer
         run: |
           rm -rf .buildozer
-          yes | buildozer -v android debug
+          # ვიყენებთ მხოლოდ 1 ბირთვს, რომ RAM არ გადაიტვირთოს
+          buildozer -v android debug
