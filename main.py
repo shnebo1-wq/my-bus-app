@@ -14,6 +14,11 @@ from kivy.properties import StringProperty, ColorProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.clock import Clock
 from kivy.app import App
+from kivy.utils import platform
+
+# --- AUTO-ROTATE-ისთვის საჭირო ბიბლიოთეკა ---
+if platform == 'android':
+    from jnius import autoclass
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -36,6 +41,7 @@ def get_path(filename):
 API_DATA = {"u": "RSS", "p": "zLdNY8JkBi", "c": "1160", "s": "3167", "h": "FZf3eNx@ZJE", "sd": "RSS-BUS"}
 API_BASE_URL = "https://bi.msg.ge/sendsms.php"
 
+# --- KV სტრუქტურა ---
 KV = f'''
 ScreenManager:
     LoginScreen:
@@ -94,7 +100,6 @@ ScreenManager:
             pos: self.pos
             radius: [20,]
     
-    # სტატუსის ინდიკატორი (წერტილი)
     MDIcon:
         icon: "circle"
         theme_text_color: "Custom"
@@ -215,7 +220,6 @@ ScreenManager:
                 padding: "15dp"
                 spacing: "12dp"
 
-# ... (History და Settings სქრინები იგივე რჩება)
 <HistoryScreen>:
     name: "history"
     MDBoxLayout:
@@ -292,7 +296,7 @@ ScreenManager:
 class StopRow(BoxLayout):
     name = StringProperty()
     phone = StringProperty()
-    status_color = ColorProperty([0.5, 0.5, 0.5, 1]) # ნაცრისფერი (უცნობია)
+    status_color = ColorProperty([0.5, 0.5, 0.5, 1])
 
 class LoginScreen(Screen): pass
 class MainScreen(Screen): pass
@@ -302,9 +306,10 @@ class HistoryScreen(Screen): pass
 
 class RSSMobileApp(MDApp):
     def build(self):
+        self.title = "RSS Control Pro"
+        self.icon = "logo.png" # ლოგოს ფიქსი კოდიდან
         self.db = self.load_db()
         self.history = self.load_history()
-        # ინდიკატორებისთვის:
         self.unit_status = self.db.get("states", {}) 
         
         self.theme_cls.theme_style = self.db.get("theme_style", "Dark")
@@ -317,6 +322,18 @@ class RSSMobileApp(MDApp):
 
         self.dia = None
         return Builder.load_string(KV)
+
+    # --- AUTO ROTATE ლოგიკა ---
+    def on_start(self):
+        if platform == 'android':
+            try:
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                activity = PythonActivity.mActivity
+                ActivityInfo = autoclass('android.content.pm.ActivityInfo')
+                # SCREEN_ORIENTATION_SENSOR აიძულებს ეკრანს დაემორჩილოს სენსორს
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
+            except Exception as e:
+                print(f"Rotation Error: {e}")
 
     def check_login(self, pin):
         correct_pin = str(self.db.get("app_pin", "1234"))
@@ -337,12 +354,11 @@ class RSSMobileApp(MDApp):
     def save_db(self, *args):
         try:
             path = get_path("system_config.dat")
-            self.db["states"] = self.unit_status # ინდიკატორების შენახვა
+            self.db["states"] = self.unit_status
             with open(path, "wb") as f:
                 f.write(base64.b64encode(json.dumps(self.db).encode()))
         except: pass
 
-    # --- EDIT & ADD დიალოგები ---
     def show_add_dialog(self):
         self.show_unit_dialog("დამატება", "", "")
 
@@ -382,7 +398,6 @@ class RSSMobileApp(MDApp):
         
         for p, n in nums.items():
             if q in n.lower() or q in p:
-                # ინდიკატორის ფერის დადგენა
                 state = self.unit_status.get(p, "OFF")
                 color = [0, 1, 0, 1] if state == "ON" else [1, 0, 0, 1]
                 container.add_widget(StopRow(name=n, phone=p, status_color=color))
@@ -402,10 +417,9 @@ class RSSMobileApp(MDApp):
         except: pass
         
         if success:
-            self.unit_status[phone] = cmd_type # ვიმახსოვრებთ მდგომარეობას
+            self.unit_status[phone] = cmd_type
             self.save_db()
 
-        # ისტორიაში ჩაწერა
         icon = "check-circle" if success else "alert-circle"
         entry = {"time": time.strftime("%H:%M:%S"), "name": name, "cmd": cmd_type, "icon": icon}
         self.history.insert(0, entry); self.history = self.history[:30]
@@ -413,7 +427,6 @@ class RSSMobileApp(MDApp):
             with open(get_path("activity_log.json"), "w", encoding='utf-8') as f: json.dump(self.history, f, ensure_ascii=False)
         except: pass
 
-    # ... (დანარჩენი დამხმარე ფუნქციები: change_screen, remove_unit, etc. იგივე რჩება)
     def change_screen(self, name):
         self.root.current = name
         if name == "database": self.refresh_ui()
