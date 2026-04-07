@@ -7,12 +7,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ვასუფთავებთ ადგილს დისკზე
+      # ვათავისუფლებთ დაახლოებით 20GB ადგილს სერვერზე
       - name: Free Disk Space
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo docker image prune -a -f
 
       - name: Install Dependencies
         run: |
@@ -23,5 +25,5 @@ jobs:
       - name: Build with Buildozer
         run: |
           rm -rf .buildozer
-          # ვიყენებთ მხოლოდ 1 ბირთვს, რომ RAM არ გადაიტვირთოს
+          # ვიყენებთ buildozer-ს 'yes' ბრძანების გარეშე, რომ თავიდან ავიცილოთ Broken Pipe
           buildozer -v android debug
