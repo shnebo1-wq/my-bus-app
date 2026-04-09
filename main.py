@@ -37,13 +37,11 @@ else:
     USED_FONT = "Roboto"
 
 def get_path(filename):
-    """ გარანტირებული გზა ფაილების შესანახად Android-ზე """
     try:
         if platform == 'android':
             target_dir = PRIMARY_STORAGE
         else:
             target_dir = App.get_running_app().user_data_dir
-            
         if not os.path.exists(target_dir): 
             os.makedirs(target_dir)
         return os.path.join(target_dir, filename)
@@ -161,33 +159,37 @@ ScreenManager:
         MDBoxLayout:
             orientation: "vertical"
             padding: "25dp"
-            spacing: "30dp"
+            spacing: "20dp"
+            
+            # --- ციფრული სტატუსის ბლოკი (MESSBOX) ---
             MDCard:
                 id: status_card
                 size_hint_y: None
                 height: "150dp"
                 radius: [25,]
                 md_bg_color: app.theme_cls.primary_dark
-                padding: "20dp"
+                padding: "15dp"
                 MDBoxLayout:
                     orientation: "vertical"
-                    spacing: "10dp"
-                    MDIcon:
-                        id: status_icon
-                        icon: "check-decagram"
+                    spacing: "5dp"
+                    MDLabel:
+                        id: digital_clock
+                        text: "00:00"
                         halign: "center"
-                        font_size: "35sp"
+                        font_style: "H3"
+                        bold: True
                     MDLabel:
                         id: live_node_name
                         text: "სისტემა მზად არის"
                         halign: "center"
-                        font_style: "H6"
+                        font_style: "Subtitle1"
                         bold: True
                     MDLabel:
                         id: live_status_text
                         text: "მოთხოვნის მოლოდინში..."
                         halign: "center"
                         theme_text_color: "Hint"
+            
             MDBoxLayout:
                 orientation: "vertical"
                 spacing: "15dp"
@@ -328,6 +330,7 @@ class RSSMobileApp(MDApp):
         self.db = self.load_db()
         self.history = self.load_history()
         self.unit_status = self.db.get("states", {}) 
+        self.last_trigger_time = ""
         
         self.theme_cls.theme_style = self.db.get("theme_style", "Dark")
         self.theme_cls.primary_palette = self.db.get("primary_palette", "Cyan")
@@ -338,7 +341,31 @@ class RSSMobileApp(MDApp):
                     self.theme_cls.font_styles[style][0] = USED_FONT
 
         self.dia = None
+        
+        # --- ტაიმერი საათის განახლებისთვის და ავტომატიზაციისთვის ---
+        Clock.schedule_interval(self.update_system, 10)
+        
         return Builder.load_string(KV)
+
+    def update_system(self, dt):
+        """ ანახლებს საათს და ამოწმებს ავტო-რეჟიმს """
+        now = time.strftime("%H:%M")
+        
+        # საათის განახლება მთავარ ეკრანზე
+        try:
+            if self.root and self.root.has_screen("main"):
+                self.root.get_screen("main").ids.digital_clock.text = now
+        except: pass
+
+        # ავტომატიზაციის შემოწმება
+        if self.db.get("active", False):
+            if now != self.last_trigger_time:
+                if now == self.db.get("on", ""):
+                    self.run_broadcast("ON")
+                    self.last_trigger_time = now
+                elif now == self.db.get("off", ""):
+                    self.run_broadcast("OFF")
+                    self.last_trigger_time = now
 
     def on_start(self):
         if platform == 'android':
@@ -403,18 +430,20 @@ class RSSMobileApp(MDApp):
         self.close_dia()
 
     def refresh_ui(self, search_query=""):
-        rv = self.root.get_screen("database").ids.rv
-        nums = self.db.get("nums", {})
-        q = search_query.lower()
-        
-        rv_data = []
-        for p, n in nums.items():
-            if q in n.lower() or q in p:
-                state = self.unit_status.get(p, "OFF")
-                color = [0, 1, 0, 1] if state == "ON" else [1, 0, 0, 1]
-                rv_data.append({'name': n, 'phone': p, 'status_color': color})
-        
-        rv.data = rv_data
+        try:
+            rv = self.root.get_screen("database").ids.rv
+            nums = self.db.get("nums", {})
+            q = search_query.lower()
+            
+            rv_data = []
+            for p, n in nums.items():
+                if q in n.lower() or q in p:
+                    state = self.unit_status.get(p, "OFF")
+                    color = [0, 1, 0, 1] if state == "ON" else [1, 0, 0, 1]
+                    rv_data.append({'name': n, 'phone': p, 'status_color': color})
+            
+            rv.data = rv_data
+        except: pass
 
     def _send_logic(self, phone, name, cmd_type, is_batch=False):
         if not is_batch:
@@ -468,11 +497,12 @@ class RSSMobileApp(MDApp):
         if self.dia: self.dia.dismiss(); self.dia = None
 
     def update_status_ui(self, name, text, color, icon):
-        ui = self.root.get_screen("main").ids
-        ui.live_node_name.text = name
-        ui.live_status_text.text = text
-        ui.status_card.md_bg_color = color
-        ui.status_icon.icon = icon
+        try:
+            ui = self.root.get_screen("main").ids
+            ui.live_node_name.text = name
+            ui.live_status_text.text = text
+            ui.status_card.md_bg_color = color
+        except: pass
 
     def fire_single(self, phone, name, cmd_type):
         self.change_screen("main")
@@ -489,34 +519,28 @@ class RSSMobileApp(MDApp):
 
     def run_broadcast(self, cmd_type):
         self.close_dia()
-        self.prog_bar = MDProgressBar(value=0)
-        self.prog_label = MDLabel(text="მზადება...", halign="center")
-        content = BoxLayout(orientation="vertical", spacing="10dp", size_hint_y=None, height="80dp")
-        content.add_widget(self.prog_label); content.add_widget(self.prog_bar)
-        self.dia = MDDialog(title="გაგზავნა", type="custom", content_cls=content, auto_dismiss=False)
+        self.pb = MDProgressBar(value=0)
+        self.dia = MDDialog(title=f"გაგზავნა: {cmd_type}", type="custom", content_cls=self.pb, auto_dismiss=False)
         self.dia.open()
         threading.Thread(target=self._broadcast_logic, args=(cmd_type,), daemon=True).start()
 
     def _broadcast_logic(self, cmd_type):
         units = list(self.db["nums"].items())
-        total = len(units)
-        for index, (p, n) in enumerate(units):
+        for i, (p, n) in enumerate(units):
             self._send_logic(p, n, cmd_type, is_batch=True)
-            Clock.schedule_once(lambda dt, v=((index+1)/total)*100, m=f"გაგზავნა: {index+1}/{total}": self._update_prog_bar(v,m))
-            time.sleep(0.3)
+            Clock.schedule_once(lambda dt, v=((i+1)/len(units))*100: setattr(self.pb, 'value', v))
+            time.sleep(0.4)
         Clock.schedule_once(lambda dt: self.close_dia())
 
-    def _update_prog_bar(self, val, msg):
-        self.prog_bar.value = val
-        self.prog_label.text = msg
-
     def refresh_history_ui(self):
-        container = self.root.get_screen("history").ids.history_list
-        container.clear_widgets()
-        for item in self.history:
-            li = OneLineIconListItem(text=f"[{item['time']}] {item['name']} -> {item['cmd']}")
-            li.add_widget(IconLeftWidget(icon=item['icon']))
-            container.add_widget(li)
+        try:
+            container = self.root.get_screen("history").ids.history_list
+            container.clear_widgets()
+            for item in self.history:
+                li = OneLineIconListItem(text=f"[{item['time']}] {item['name']} -> {item['cmd']}")
+                li.add_widget(IconLeftWidget(icon=item['icon']))
+                container.add_widget(li)
+        except: pass
 
     def load_history(self):
         path = get_path("activity_log.json")
